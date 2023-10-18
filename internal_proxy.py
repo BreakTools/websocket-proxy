@@ -105,7 +105,6 @@ async def connect_to_websocket_server() -> None:
                                     )
 
                             case "data":
-                                print("new data")
                                 try:
                                     await CONNECTIONS[parsed_message["id"]].send_data(
                                         parsed_message["data"]
