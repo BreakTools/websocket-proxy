@@ -22,6 +22,7 @@ class spoofed_client:
     def __init__(self, parent_websocket, id) -> None:
         self.parent_websocket = parent_websocket
         self.id = id
+        self.connected = False
 
     async def connect_to_backend(self) -> None:
         """This function creates a new websocket connection to the backend.
@@ -36,8 +37,9 @@ class spoofed_client:
                     (json.dumps({"body": "acknowledge_new_connection", "id": self.id}))
                 )
                 logging.info(f"A new client has connected with ID {self.id}.")
+                self.connected = True
 
-                while True:
+                while self.connected:
                     try:
                         message = await websocket.recv()
 
@@ -60,6 +62,10 @@ class spoofed_client:
     async def send_data(self, data: dict) -> None:
         """This function sends data to the websocket that is stored in this class."""
         await self.websocket.send(json.dumps(data))
+
+    async def disconnect(self) -> None:
+        self.connected = False
+        await self.websocket.close()
 
 
 async def connect_to_websocket_server() -> None:
@@ -95,6 +101,7 @@ async def connect_to_websocket_server() -> None:
 
                             case "del_connection":
                                 try:
+                                    await CONNECTIONS[parsed_message["id"]].disconnect()
                                     CONNECTIONS.pop(parsed_message["id"])
                                     logging.info(
                                         f"Deleted connection with client {parsed_message['id']}"
